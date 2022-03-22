@@ -2,7 +2,7 @@ const express = require("express");
 const { authToken } = require("../middleware/tokenAuth");
 const { userAuth } = require("../middleware/userAuth");
 const router = express.Router();
-const { ToyModel, validateToy } = require("../models/toyModel");
+const { ToyModel, validateToy, validateToy4Edit } = require("../models/toyModel");
 
 const NUM = 10; //*number of toys per page
 
@@ -50,7 +50,7 @@ router.get("/search", async (req, res) => {
         if (pQ && ((NUM * pQ) - toysData.length > NUM)) {
             return res.json({ msg: "Page unavilable (not enouth toys..)" });
         }
-        if (pageQ) {
+        if (pQ) {
             toysData = toysData.filter((item, i) => {
                 if (i >= ((pQ - 1) * NUM) && i < ((pQ - 1) * NUM) + NUM) {
                     return true;
@@ -63,15 +63,20 @@ router.get("/search", async (req, res) => {
         return res.json(toysData);
     }
 
+    return res.json({msg:"enter a keyword (?s) to search by in the url ."});
+
 })
 
-router.get("/category/:cat", async (req, res) => {
+router.get("/category", (req,res) => {
+    return res.json({msg:"enter a category in the url."});
 
+}).get("/category/:cat", async (req, res) => {
     let toysData = await ToyModel.find({});
     let catQ = req.params.cat;
     let pQ = req.query.p;
-    if (catQ) {
 
+    if (catQ) {
+        
         toysData = toysData.filter(item => {
             if (item.category.toLowerCase() == catQ.toLowerCase()) {
                 return true;
@@ -92,7 +97,7 @@ router.get("/category/:cat", async (req, res) => {
             console.log("TOO much!")
             return res.json({ msg: "Page unavilable (not enouth toys..)" });
         }
-        if (pageQ) {
+        if (pQ) {
             toysData = toysData.filter((item, i) => {
                 if (i >= ((pQ - 1) * NUM) && i < ((pQ - 1) * NUM) + NUM) {
                     return true;
@@ -104,10 +109,12 @@ router.get("/category/:cat", async (req, res) => {
         return res.json(toysData);
     }
 
-
-
 })
 
+
+
+    
+    
 router.get("/prices", async (req, res) => {
     let minQ = req.query.min;
     let maxQ = req.query.max;
@@ -123,7 +130,7 @@ router.get("/prices", async (req, res) => {
         return res.json(toysData);
     }
 
-    return res.json({msg:"enter min and max."});
+    return res.json({msg:"enter min(?min) and max(?max) values in the url to get toys in the relevant price range."});
 })
 
 router.post("/", authToken, async (req, res) => {
@@ -144,15 +151,18 @@ router.post("/", authToken, async (req, res) => {
 
         console.log("toy Added to database!");
         console.log(newToy);
-        res.json(newToy);
+        return res.json(newToy);
     }
     catch (err) {
         console.log(err)
-        res.json(err);
+        return res.json(err);
     }
 })
 
-router.delete("/:delID", [authToken, userAuth], async (req, res) => {
+router.delete("/", (req,res) => {
+    return res.json({msg:'to delete a toy from the database, enter a toy id in the url, and add valid token in header(key is\"auth-token\").'});
+
+}).delete("/:delID", [authToken, userAuth], async (req, res) => {
 
     console.log(" -" + req.userAuthStatus);
 
@@ -164,11 +174,15 @@ router.delete("/:delID", [authToken, userAuth], async (req, res) => {
         console.log(error);
         res.status(400).send(error);
     }
+
 })
 
-router.put("/:editID", [authToken, userAuth], async (req, res) => {
+router.put("/", (req,res) => {
+    return res.json({msg:'to modify a toy in the database, enter a toy id in the url, add valid token in header(key is"auth-token"), and a valid toy object in the request body.'});
 
-    let validatedBody = validateToy(req.body);
+}).put("/:editID", [authToken, userAuth], async (req, res) => {
+
+    let validatedBody = validateToy4Edit(req.body);
     if (validatedBody.error) {
         return res.status(400).json({ msg: validatedBody.error.details });
     }
