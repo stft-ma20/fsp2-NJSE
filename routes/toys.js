@@ -4,21 +4,21 @@ const { userAuth } = require("../middleware/userAuth");
 const router = express.Router();
 const { ToyModel, validateToy } = require("../models/toyModel");
 
-const NUM = 2; //*number of toys per page
+const NUM = 10; //*number of toys per page
 
 router.get("/", async (req, res) => {
-    let pageQ = req.query.page;
+    let pQ = req.query.p;
     let toysData = await ToyModel.find({});
 
-    if (pageQ && (pageQ <= 0)) {
+    if (pQ && (pQ <= 0)) {
         return res.json({ msg: "Error page number must be bigger than 0." });
     }
-    if (pageQ && ((NUM * pageQ) - toysData.length > 5)) {
+    if (pQ && ((NUM * pQ) - toysData.length > NUM)) {
         return res.json({ msg: "Page unavilable (not enouth toys..)" });
     }
-    if (pageQ) {
+    if (pQ) {
         toysData = toysData.filter((item, i) => {
-            if (i >= ((pageQ - 1) * NUM) && i < ((pageQ - 1) * NUM) + NUM) {
+            if (i >= ((pQ - 1) * NUM) && i < ((pQ - 1) * NUM) + NUM) {
                 return true;
             }
         })
@@ -31,7 +31,7 @@ router.get("/", async (req, res) => {
 
 router.get("/search", async (req, res) => {
     let sQ = req.query.s;
-    let pageQ = req.query.page;
+    let pQ = req.query.p;
     let toysData = await ToyModel.find({});
 
     if (sQ) {
@@ -42,15 +42,17 @@ router.get("/search", async (req, res) => {
             }
         })
 
-        if (pageQ && (pageQ <= 0)) {
+        console.log(toysData.length," items found");
+
+        if (pQ && (pQ <= 0)) {
             return res.json({ msg: "Error page number must be bigger than 0." });
         }
-        if (pageQ && ((NUM * pageQ) - toysData.length > 5)) {
+        if (pQ && ((NUM * pQ) - toysData.length > NUM)) {
             return res.json({ msg: "Page unavilable (not enouth toys..)" });
         }
         if (pageQ) {
             toysData = toysData.filter((item, i) => {
-                if (i >= ((pageQ - 1) * NUM) && i < ((pageQ - 1) * NUM) + NUM) {
+                if (i >= ((pQ - 1) * NUM) && i < ((pQ - 1) * NUM) + NUM) {
                     return true;
                 }
             })
@@ -67,7 +69,7 @@ router.get("/category/:cat", async (req, res) => {
 
     let toysData = await ToyModel.find({});
     let catQ = req.params.cat;
-    let pageQ = req.query.page;
+    let pQ = req.query.p;
     if (catQ) {
 
         toysData = toysData.filter(item => {
@@ -75,21 +77,24 @@ router.get("/category/:cat", async (req, res) => {
                 return true;
             }
         })
+
+        console.log(toysData.length," items found");
+
         if (toysData.length == 0) {
-            return res.json({ msg: "no items in \"" + catQ + "\" caegory was not found!" })
+            return res.json({ msg: "no items in \"" + catQ + "\" caegory was not found!" });
         }
 
-        if (pageQ && (pageQ <= 0)) {
+        if (pQ && (pQ <= 0)) {
             console.log("<=0")
             return res.json({ msg: "Error page number must be bigger than 0." });
         }
-        if (pageQ && ((NUM * pageQ) - toysData.length > 5)) {
+        if (pQ && ((NUM * pQ) - toysData.length > NUM)) {
             console.log("TOO much!")
             return res.json({ msg: "Page unavilable (not enouth toys..)" });
         }
         if (pageQ) {
             toysData = toysData.filter((item, i) => {
-                if (i >= ((pageQ - 1) * NUM) && i < ((pageQ - 1) * NUM) + NUM) {
+                if (i >= ((pQ - 1) * NUM) && i < ((pQ - 1) * NUM) + NUM) {
                     return true;
                 }
             })
